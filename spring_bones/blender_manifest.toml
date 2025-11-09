@@ -1,0 +1,17 @@
+schema_version = "1.0.0"
+
+id = "spring_bones"
+version = "0.9.0"
+name = "Spring Bones"
+tagline = "Add a spring dynamic effect to a single/multiple bones"
+maintainer = "sage-bomb"
+type = "add-on"
+
+blender_version_min = "4.4.0"
+
+website = "https://github.com/sage-bomb/blender_spring_armature"
+license = "MIT"
+
+tags = ["animation", "rigging", "physics"]
+
+entry = "spring_bones"

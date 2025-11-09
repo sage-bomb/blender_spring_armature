@@ -1,0 +1,48 @@
+name: Build & Publish Blender Extensions Repo
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download Blender (Linux headless)
+        run: |
+          set -e
+          BLENDER_URL="https://download.blender.org/release/Blender4.4/blender-4.4.0-linux-x64.tar.xz"
+          mkdir -p $HOME/blender
+          curl -L "$BLENDER_URL" -o blender.tar.xz
+          tar -xJf blender.tar.xz -C $HOME/blender --strip-components=1
+          echo "$HOME/blender" >> $GITHUB_PATH
+
+      - name: Build extension(s)
+        run: |
+          set -e
+          mkdir -p dist
+          "$HOME/blender/blender" --command extension build --source-dir "spring_bones" --output-dir ./dist
+
+      - name: Generate index.json
+        run: |
+          set -e
+          "$HOME/blender/blender" --command extension server-generate --repo-dir ./dist
+          test -f dist/index.json || (echo "index.json not generated"; exit 1)
+
+      - name: Upload artifact for Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
