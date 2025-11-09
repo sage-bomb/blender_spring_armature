@@ -9,9 +9,9 @@ from .simulation import spring_bone
 
 
 @persistent
-def spring_bone_frame_mode(_scene):
+def spring_bone_frame_mode(_scene, depsgraph):
     if bpy.context.scene.sb_global_spring_frame is True:
-        spring_bone(_scene)
+        spring_bone(_scene, depsgraph=depsgraph)
 
 
 def register():
