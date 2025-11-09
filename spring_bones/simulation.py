@@ -120,9 +120,6 @@ def spring_bone(_context=None):
     dt = _current_dt(scene)
 
     target_alpha = getattr(scene, "sb_target_alpha", 0.2)
-    freq_hz = getattr(scene, "sb_phys_freq", 4.0)
-    zeta = getattr(scene, "sb_phys_zeta", 0.7)
-
     for bone in scene.sb_spring_bones:
         armature = bpy.data.objects[bone.armature]
         pose_bone = armature.pose.bones.get(bone.name)
@@ -155,6 +152,9 @@ def spring_bone(_context=None):
 
             v_target = (target_smooth - prev_target) / max(1e-4, dt)
             external_accel = Vector((0.0, 0.0, -pose_bone.sb_gravity))
+
+            freq_hz = getattr(pose_bone, "sb_phys_freq", 4.0)
+            zeta = getattr(pose_bone, "sb_phys_zeta", 0.7)
 
             x = emp_head.location.copy()
             v = Vector(bone.speed)

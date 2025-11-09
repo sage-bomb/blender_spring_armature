@@ -66,8 +66,8 @@ class SB_PT_ui(bpy.types.Panel):
             row = box.row(align=True)
             row.prop(scene, "sb_use_physics", text="Enable")
             row = box.row(align=True)
-            row.prop(scene, "sb_phys_freq")
-            row.prop(scene, "sb_phys_zeta")
+            row.prop(active_bone, "sb_phys_freq")
+            row.prop(active_bone, "sb_phys_zeta")
             row = box.row(align=True)
             row.prop(scene, "sb_target_alpha")
 
