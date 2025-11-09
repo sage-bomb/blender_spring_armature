@@ -10,7 +10,7 @@ type = "add-on"
 blender_version_min = "4.4.0"
 
 website = "https://github.com/sage-bomb/blender_spring_armature"
-license = "MIT"
+license = ["MIT"]
 
 tags = ["animation", "rigging", "physics"]
 
