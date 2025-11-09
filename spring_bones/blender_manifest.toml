@@ -3,15 +3,19 @@ schema_version = "1.0.0"
 id = "spring_bones"
 version = "0.9.0"
 name = "Spring Bones"
-tagline = "Add a spring dynamic effect to a single/multiple bones"
+tagline = "Add a spring dynamic effect to a single or multiple bones"
 maintainer = "sage-bomb"
 type = "add-on"
 
+# Minimum supported Blender version
 blender_version_min = "4.4.0"
 
 website = "https://github.com/sage-bomb/blender_spring_armature"
-license = ["MIT"]
+license = "MIT"
 
-tags = ["animation", "rigging", "physics"]
+# Tags must use Blender's built-in categories (case-sensitive)
+# Valid tags include: Animation, Rigging, Physics, etc.
+tags = ["Animation", "Rigging", "Physics"]
 
+# The entry point Python module (folder or file containing register/unregister)
 entry = "spring_bones"
