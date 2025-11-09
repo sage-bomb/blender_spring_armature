@@ -86,7 +86,8 @@ def _current_dt(scene) -> float:
     if getattr(scene, "sb_global_spring", False):
         return 0.02
     fps = max(1, scene.render.fps)
-    return 1.0 / fps
+    fps_base = getattr(scene.render, "fps_base", 1.0) or 1.0
+    return fps_base / fps
 
 
 def _ema_vec(prev: Vector, cur: Vector, alpha: float) -> Vector:
@@ -113,17 +114,30 @@ def _spring_damper_step(
     return x_next, v_next
 
 
-def spring_bone(_context=None):
+def spring_bone(scene, depsgraph=None):
     """Advance the simulation for all registered spring bones."""
-    scene = bpy.context.scene
+    if scene is None:
+        scene = bpy.context.scene
+    elif hasattr(scene, "scene") and scene.scene is not None:
+        scene = scene.scene
+    if depsgraph is None:
+        depsgraph = bpy.context.view_layer.depsgraph
+    if scene is None:
+        return None
+
     use_physics = getattr(scene, "sb_use_physics", False)
     dt = _current_dt(scene)
 
     target_alpha = getattr(scene, "sb_target_alpha", 0.2)
     for bone in scene.sb_spring_bones:
-        armature = bpy.data.objects[bone.armature]
+        armature = bpy.data.objects.get(bone.armature)
+        if armature is None:
+            continue
+
+        armature_eval = armature.evaluated_get(depsgraph)
         pose_bone = armature.pose.bones.get(bone.name)
-        if pose_bone is None:
+        pose_bone_eval = armature_eval.pose.bones.get(bone.name)
+        if pose_bone is None or pose_bone_eval is None:
             continue
 
         if pose_bone.sb_global_influence == 0.0:
@@ -134,19 +148,30 @@ def spring_bone(_context=None):
         if emp_tail is None or emp_head is None:
             continue
 
-        emp_tail_loc, _rot, _scale = emp_tail.matrix_world.decompose()
+        if getattr(scene, "sb_debug", False):
+            print("[SB] eval?", armature is armature_eval, " (expect False)")
+
+        target_basis = pose_bone_eval.tail if bone.sb_bone_rot else pose_bone_eval.head
+        target_world = armature_eval.matrix_world @ target_basis
+        target_world_vec = Vector(target_world)
+
+        if getattr(scene, "sb_debug", False):
+            print(
+                "[SB] tgt_world_len",
+                (target_world_vec - Vector(armature_eval.location)).length,
+            )
 
         if not use_physics:
             base_pos_dir = Vector((0, 0, -pose_bone.sb_gravity))
-            base_pos_dir += (emp_tail_loc - emp_head.location)
+            base_pos_dir += (target_world_vec - emp_head.location)
             bone.speed += base_pos_dir * pose_bone.sb_stiffness
             bone.speed *= pose_bone.sb_damp
             emp_head.location += bone.speed
             emp_head.location = lerp_vec(
-                emp_head.location, emp_tail_loc, pose_bone.sb_global_influence
+                emp_head.location, target_world_vec, pose_bone.sb_global_influence
             )
         else:
-            raw_target = Vector(emp_tail_loc)
+            raw_target = target_world_vec.copy()
             prev_target = Vector(bone.prev_target_loc)
             target_smooth = _ema_vec(prev_target, raw_target, target_alpha)
 
@@ -169,6 +194,7 @@ def spring_bone(_context=None):
                 external_accel=external_accel,
             )
 
+            # NOTE: write to original ID, evaluated is copy-on-write
             emp_head.location = x_next
             bone.speed = v_next
 
@@ -178,7 +204,7 @@ def spring_bone(_context=None):
 
             bone.prev_target_loc = target_smooth
 
-        track_forces_for_bone(bone, armature, pose_bone, emp_head, emp_tail)
+        track_forces_for_bone(bone, armature_eval, pose_bone_eval, emp_head, emp_tail)
 
     return None
 
