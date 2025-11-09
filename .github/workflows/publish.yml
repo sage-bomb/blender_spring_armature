@@ -4,21 +4,32 @@ on:
   push:
     branches: [ main ]
     tags: [ 'v*' ]
+  workflow_dispatch:
+
+# Required for Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Only one Pages deployment at a time
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
-
-    permissions:
-      contents: read
-      pages: write
-      id-token: write
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Download Blender (Linux headless)
+      # Setup Pages (required before uploading artifact)
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      # --- Download Blender (headless) ---
+      - name: Download Blender
         run: |
           set -e
           BLENDER_URL="https://download.blender.org/release/Blender4.4/blender-4.4.0-linux-x64.tar.xz"
@@ -27,22 +38,39 @@ jobs:
           tar -xJf blender.tar.xz -C $HOME/blender --strip-components=1
           echo "$HOME/blender" >> $GITHUB_PATH
 
+      # --- Build extension zip(s) into ./dist ---
       - name: Build extension(s)
         run: |
           set -e
           mkdir -p dist
-          "$HOME/blender/blender" --command extension build --source-dir "spring_bones" --output-dir ./dist
+          "$HOME/blender/blender" --command extension build \
+            --source-dir spring_bones \
+            --output-dir ./dist
 
+      # --- Generate repository index.json ---
       - name: Generate index.json
         run: |
           set -e
           "$HOME/blender/blender" --command extension server-generate --repo-dir ./dist
           test -f dist/index.json || (echo "index.json not generated"; exit 1)
+          ls -la dist
 
-      - name: Upload artifact for Pages
+      # --- Upload artifact for Pages ---
+      - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: dist
 
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+
+    # 🔴 This is the bit your run was missing
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
       - name: Deploy to GitHub Pages
+        id: deployment
         uses: actions/deploy-pages@v4
