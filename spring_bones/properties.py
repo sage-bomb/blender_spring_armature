@@ -60,6 +60,12 @@ _SCENE_PROPS = {
         description="Draw spring forces/torques in the 3D View",
         default=False,
     ),
+    "sb_last_eval_subframe": bpy.props.FloatProperty(
+        name="Last Evaluated Sub-frame",
+        description="Internal: last sub-frame that evaluated the animation mode",
+        default=-1.0,
+        options={'HIDDEN'},
+    ),
     "sb_force_scale": bpy.props.FloatProperty(
         name="Force Scale",
         description="Scale for positional force debug lines",

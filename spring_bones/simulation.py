@@ -90,6 +90,14 @@ def _current_dt(scene) -> float:
     return fps_base / fps
 
 
+def _current_frame_time(scene) -> float:
+    """Return the current frame + sub-frame as a float."""
+    frame_final = getattr(scene, "frame_current_final", None)
+    if frame_final is not None:
+        return float(frame_final)
+    return float(scene.frame_current + getattr(scene, "frame_subframe", 0.0))
+
+
 def _ema_vec(prev: Vector, cur: Vector, alpha: float) -> Vector:
     return prev.lerp(cur, max(0.0, min(1.0, alpha)))
 
@@ -126,7 +134,21 @@ def spring_bone(scene, depsgraph=None):
         return None
 
     use_physics = getattr(scene, "sb_use_physics", False)
-    dt = _current_dt(scene)
+
+    base_dt = _current_dt(scene)
+    dt = base_dt
+    if getattr(scene, "sb_global_spring_frame", False):
+        frame_time = _current_frame_time(scene)
+        last_frame_time = getattr(scene, "sb_last_eval_subframe", -1.0)
+        if last_frame_time >= 0.0:
+            delta_frames = frame_time - last_frame_time
+            if delta_frames == 0.0:
+                return None
+            if delta_frames < 0.0:
+                dt = base_dt
+            else:
+                dt = base_dt * delta_frames
+        scene.sb_last_eval_subframe = frame_time
 
     target_alpha = getattr(scene, "sb_target_alpha", 0.2)
     for bone in scene.sb_spring_bones:
@@ -215,6 +237,8 @@ def update_bone(_self, context):
     time_start = time.time()
     scene = context.scene
     armature = context.active_object
+
+    scene.sb_last_eval_subframe = -1.0
 
     if len(scene.sb_spring_bones) > 0:
         for i in range(len(scene.sb_spring_bones) - 1, -1, -1):
@@ -305,6 +329,8 @@ def end_spring_bone(context, _operator):
     """Stop the simulation and remove helper objects."""
     if context.scene.sb_global_spring:
         context.scene.sb_global_spring = False
+
+    context.scene.sb_last_eval_subframe = -1.0
 
     for item in context.scene.sb_spring_bones:
         active_bone = context.active_object.pose.bones.get(item.name)
