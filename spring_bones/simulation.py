@@ -226,6 +226,9 @@ def spring_bone(scene, depsgraph=None):
 
             bone.prev_target_loc = target_smooth
 
+        emp_head.update_tag()
+        armature.update_tag()
+
         track_forces_for_bone(bone, armature_eval, pose_bone_eval, emp_head, emp_tail)
 
     return None
