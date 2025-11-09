@@ -7,11 +7,16 @@ from bpy.app.handlers import persistent
 
 from .simulation import spring_bone
 
-
 @persistent
-def spring_bone_frame_mode(_scene, depsgraph):
-    if bpy.context.scene.sb_global_spring_frame is True:
-        spring_bone(_scene, depsgraph=depsgraph)
+def spring_bone_frame_mode(scene, depsgraph):
+    # Use the scene being updated by the depsgraph, not bpy.context
+    if getattr(scene, "sb_global_spring_frame", False):
+        spring_bone(scene, depsgraph=depsgraph)
+
+# @persistent
+# def spring_bone_frame_mode(_scene, depsgraph):
+#     if bpy.context.scene.sb_global_spring_frame is True:
+#         spring_bone(_scene, depsgraph=depsgraph)
 
 
 def register():
