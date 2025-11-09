@@ -4,31 +4,22 @@ from __future__ import annotations
 
 import bpy
 from bpy.app.handlers import persistent
-
 from .simulation import spring_bone
 
 @persistent
-def spring_bone_frame_mode(scene, depsgraph):
-    # Use the scene being updated by the depsgraph, not bpy.context
+def spring_bone_depsgraph_pre(scene, depsgraph):
+    # Only run when the animation system is stepping and your mode is on
     if getattr(scene, "sb_global_spring_frame", False):
         spring_bone(scene, depsgraph=depsgraph)
 
-# @persistent
-# def spring_bone_frame_mode(_scene, depsgraph):
-#     if bpy.context.scene.sb_global_spring_frame is True:
-#         spring_bone(_scene, depsgraph=depsgraph)
-
-
 def register():
-    if spring_bone_frame_mode not in bpy.app.handlers.frame_change_post:
-        bpy.app.handlers.frame_change_post.append(spring_bone_frame_mode)
-
+    h = bpy.app.handlers.depsgraph_update_pre
+    if spring_bone_depsgraph_pre not in h:
+        h.append(spring_bone_depsgraph_pre)
 
 def unregister():
-    try:
-        bpy.app.handlers.frame_change_post.remove(spring_bone_frame_mode)
-    except ValueError:
-        pass
-
+    h = bpy.app.handlers.depsgraph_update_pre
+    if spring_bone_depsgraph_pre in h:
+        h.remove(spring_bone_depsgraph_pre)
 
 __all__ = ["spring_bone_frame_mode"]
