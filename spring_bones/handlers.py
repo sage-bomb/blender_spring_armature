@@ -9,24 +9,24 @@ from .simulation import spring_bone
 
 
 @persistent
-def spring_bone_depsgraph_post(scene, depsgraph):
-    """Advance the spring simulation after Blender finishes evaluating."""
+def spring_bone_frame_post(scene: bpy.types.Scene) -> None:
+    """Advance the spring simulation once per animation frame."""
 
-    # Only run when the animation system is stepping and your mode is on
     if getattr(scene, "sb_global_spring_frame", False):
+        depsgraph = bpy.context.view_layer.depsgraph
         spring_bone(scene, depsgraph=depsgraph)
 
 
-def register():
-    handlers = bpy.app.handlers.depsgraph_update_post
-    if spring_bone_depsgraph_post not in handlers:
-        handlers.append(spring_bone_depsgraph_post)
+def register() -> None:
+    handlers = bpy.app.handlers.frame_change_post
+    if spring_bone_frame_post not in handlers:
+        handlers.append(spring_bone_frame_post)
 
 
-def unregister():
-    handlers = bpy.app.handlers.depsgraph_update_post
-    if spring_bone_depsgraph_post in handlers:
-        handlers.remove(spring_bone_depsgraph_post)
+def unregister() -> None:
+    handlers = bpy.app.handlers.frame_change_post
+    if spring_bone_frame_post in handlers:
+        handlers.remove(spring_bone_frame_post)
 
 
-__all__ = ["spring_bone_frame_mode"]
+__all__ = ["spring_bone_frame_post", "register", "unregister"]
