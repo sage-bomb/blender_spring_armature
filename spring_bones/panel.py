@@ -40,8 +40,8 @@ class SB_PT_ui(bpy.types.Panel):
             col.label(text='Bone Parameters:')
             col.prop(active_bone, 'sb_bone_spring', text="Spring")
             col.prop(active_bone, 'sb_bone_rot', text="Rotation")
-            col.prop(active_bone, 'sb_stiffness', text="Bouncy")
-            col.prop(active_bone, 'sb_damp', text="Speed")
+            col.prop(active_bone, 'sb_phys_stiffness', text="Stiffness")
+            col.prop(active_bone, 'sb_phys_damping', text="Damping")
             col.prop(active_bone, 'sb_gravity', text="Gravity")
             col.prop(active_bone, 'sb_global_influence', text="Influence")
 
@@ -61,16 +61,6 @@ class SB_PT_ui(bpy.types.Panel):
             row.operator("sb.diag_force_viz", text="Diagnose", icon='INFO')
 
             layout.separator()
-            box = layout.box()
-            box.label(text="Physics Mode:")
-            row = box.row(align=True)
-            row.prop(scene, "sb_use_physics", text="Enable")
-            row = box.row(align=True)
-            row.prop(scene, "sb_phys_freq")
-            row.prop(scene, "sb_phys_zeta")
-            row = box.row(align=True)
-            row.prop(scene, "sb_target_alpha")
-
 
 def register():
     from bpy.utils import register_class
