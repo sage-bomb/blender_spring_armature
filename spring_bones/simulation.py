@@ -98,10 +98,6 @@ def _current_frame_time(scene) -> float:
     return float(scene.frame_current + getattr(scene, "frame_subframe", 0.0))
 
 
-def _ema_vec(prev: Vector, cur: Vector, alpha: float) -> Vector:
-    return prev.lerp(cur, max(0.0, min(1.0, alpha)))
-
-
 def _spring_damper_step(
     x: Vector,
     v: Vector,
@@ -133,8 +129,6 @@ def spring_bone(scene, depsgraph=None):
     if scene is None:
         return None
 
-    use_physics = getattr(scene, "sb_use_physics", False)
-
     base_dt = _current_dt(scene)
     dt = base_dt
     if getattr(scene, "sb_global_spring_frame", False):
@@ -149,10 +143,6 @@ def spring_bone(scene, depsgraph=None):
             else:
                 dt = base_dt * delta_frames
         scene.sb_last_eval_subframe = frame_time
-
-    target_alpha = getattr(scene, "sb_target_alpha", 0.2)
-    freq_hz = getattr(scene, "sb_phys_freq", 4.0)
-    zeta = getattr(scene, "sb_phys_zeta", 0.7)
 
     for bone in scene.sb_spring_bones:
         armature = bpy.data.objects.get(bone.armature)
@@ -186,45 +176,36 @@ def spring_bone(scene, depsgraph=None):
                 (target_world_vec - Vector(armature_eval.location)).length,
             )
 
-        if not use_physics:
-            base_pos_dir = Vector((0, 0, -pose_bone.sb_gravity))
-            base_pos_dir += (target_world_vec - emp_head.location)
-            bone.speed += base_pos_dir * pose_bone.sb_stiffness
-            bone.speed *= pose_bone.sb_damp
-            emp_head.location += bone.speed
-            emp_head.location = lerp_vec(
-                emp_head.location, target_world_vec, pose_bone.sb_global_influence
-            )
-        else:
-            raw_target = target_world_vec.copy()
-            prev_target = Vector(bone.prev_target_loc)
-            target_smooth = _ema_vec(prev_target, raw_target, target_alpha)
+        raw_target = target_world_vec.copy()
+        prev_target = Vector(bone.prev_target_loc)
+        v_target = (raw_target - prev_target) / max(1e-4, dt)
+        external_accel = Vector((0.0, 0.0, -pose_bone.sb_gravity))
 
-            v_target = (target_smooth - prev_target) / max(1e-4, dt)
-            external_accel = Vector((0.0, 0.0, -pose_bone.sb_gravity))
+        freq_hz = getattr(pose_bone, "sb_phys_stiffness", 4.0)
+        zeta = getattr(pose_bone, "sb_phys_damping", 0.7)
 
-            x = emp_head.location.copy()
-            v = Vector(bone.speed)
-            x_next, v_next = _spring_damper_step(
-                x=x,
-                v=v,
-                x_target=target_smooth,
-                v_target=v_target,
-                freq_hz=freq_hz,
-                zeta=zeta,
-                dt=dt,
-                external_accel=external_accel,
-            )
+        x = emp_head.location.copy()
+        v = Vector(bone.speed)
+        x_next, v_next = _spring_damper_step(
+            x=x,
+            v=v,
+            x_target=raw_target,
+            v_target=v_target,
+            freq_hz=freq_hz,
+            zeta=zeta,
+            dt=dt,
+            external_accel=external_accel,
+        )
 
-            # NOTE: write to original ID, evaluated is copy-on-write
-            emp_head.location = x_next
-            bone.speed = v_next
+        # NOTE: write to original ID, evaluated is copy-on-write
+        emp_head.location = x_next
+        bone.speed = v_next
 
-            emp_head.location = lerp_vec(
-                emp_head.location, target_smooth, pose_bone.sb_global_influence
-            )
+        emp_head.location = lerp_vec(
+            emp_head.location, raw_target, pose_bone.sb_global_influence
+        )
 
-            bone.prev_target_loc = target_smooth
+        bone.prev_target_loc = raw_target
 
         emp_head.update_tag()
         armature.update_tag()

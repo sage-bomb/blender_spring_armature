@@ -80,32 +80,6 @@ _SCENE_PROPS = {
         min=0.0,
         soft_max=10.0,
     ),
-    "sb_use_physics": bpy.props.BoolProperty(
-        name="Physics Mode",
-        description="Use spring–damper physics update instead of legacy integrator",
-        default=False,
-    ),
-    "sb_phys_freq": bpy.props.FloatProperty(
-        name="Freq (Hz)",
-        description="Natural frequency of the spring",
-        default=4.0,
-        min=0.01,
-        soft_max=20.0,
-    ),
-    "sb_phys_zeta": bpy.props.FloatProperty(
-        name="Damping Ratio",
-        description="0 = none, 1 = critical, >1 = over-damped",
-        default=0.7,
-        min=0.0,
-        soft_max=2.0,
-    ),
-    "sb_target_alpha": bpy.props.FloatProperty(
-        name="Target Smooth",
-        description="EMA smoothing applied to the target before physics",
-        default=0.2,
-        min=0.0,
-        max=1.0,
-    ),
 }
 
 _POSE_BONE_PROPS = {
@@ -114,19 +88,19 @@ _POSE_BONE_PROPS = {
         default=False,
         description="Enable spring effect on this bone",
     ),
-    "sb_stiffness": bpy.props.FloatProperty(
+    "sb_phys_stiffness": bpy.props.FloatProperty(
         name="Stiffness",
-        default=0.5,
+        description="Natural frequency of the spring (Hz)",
+        default=4.0,
         min=0.01,
-        max=1.0,
-        description="Bouncy/elasticity value, higher values lead to more bounciness",
+        soft_max=20.0,
     ),
-    "sb_damp": bpy.props.FloatProperty(
-        name="Damp",
+    "sb_phys_damping": bpy.props.FloatProperty(
+        name="Damping",
+        description="Damping ratio (0 = none, 1 = critical)",
         default=0.7,
         min=0.0,
-        max=10.0,
-        description="Speed/damping force applied to the bone to go back to its initial position",
+        soft_max=2.0,
     ),
     "sb_gravity": bpy.props.FloatProperty(
         name="Gravity",
