@@ -24,6 +24,15 @@ def _ema(prev: Vector, cur: Vector, alpha: float) -> Vector:
     return prev.lerp(cur, max(0.0, min(1.0, alpha)))
 
 
+def _ema_vec(prev: Vector, cur: Vector, alpha: float) -> Vector:
+    # clamp for safety
+    if alpha < 0.0:
+        alpha = 0.0
+    elif alpha > 1.0:
+        alpha = 1.0
+    return prev.lerp(cur, alpha)
+
+
 def _safe_normalize(vec: Vector) -> Vector:
     length = vec.length
     if length < EPS:
@@ -178,7 +187,13 @@ def spring_bone(scene, depsgraph=None):
 
         raw_target = target_world_vec.copy()
         prev_target = Vector(bone.prev_target_loc)
-        v_target = (raw_target - prev_target) / max(1e-4, dt)
+
+        # Use scene prop if present; otherwise default to the stable old value (0.2)
+        target_alpha = getattr(scene, "sb_target_alpha", 0.2)
+        target_smooth = _ema_vec(prev_target, raw_target, target_alpha)
+
+        # IMPORTANT: derive v_target from the SMOOTHED series
+        v_target = (target_smooth - prev_target) / max(1e-4, dt)
         external_accel = Vector((0.0, 0.0, -pose_bone.sb_gravity))
 
         freq_hz = getattr(pose_bone, "sb_phys_stiffness", 4.0)
@@ -189,8 +204,8 @@ def spring_bone(scene, depsgraph=None):
         x_next, v_next = _spring_damper_step(
             x=x,
             v=v,
-            x_target=raw_target,
-            v_target=v_target,
+            x_target=target_smooth,    # use smoothed target
+            v_target=v_target,         # velocity from smoothed series
             freq_hz=freq_hz,
             zeta=zeta,
             dt=dt,
@@ -202,10 +217,10 @@ def spring_bone(scene, depsgraph=None):
         bone.speed = v_next
 
         emp_head.location = lerp_vec(
-            emp_head.location, raw_target, pose_bone.sb_global_influence
+            emp_head.location, target_smooth, pose_bone.sb_global_influence
         )
 
-        bone.prev_target_loc = raw_target
+        bone.prev_target_loc = target_smooth
 
         emp_head.update_tag()
         armature.update_tag()

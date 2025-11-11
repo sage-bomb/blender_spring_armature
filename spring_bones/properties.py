@@ -80,6 +80,13 @@ _SCENE_PROPS = {
         min=0.0,
         soft_max=10.0,
     ),
+    "sb_target_alpha": bpy.props.FloatProperty(
+        name="Target Smoothing",
+        description="Smoothing factor for target motion (0 = none, 1 = snap)",
+        default=0.2,
+        min=0.0,
+        max=1.0,
+    ),
 }
 
 _POSE_BONE_PROPS = {
