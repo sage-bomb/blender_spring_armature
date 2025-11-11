@@ -151,28 +151,8 @@ def spring_bone(scene, depsgraph=None):
         scene.sb_last_eval_subframe = frame_time
 
     target_alpha = getattr(scene, "sb_target_alpha", 0.2)
-    if getattr(scene, "sb_global_spring_frame", False):
-        freq_hz = getattr(
-            scene,
-            "sb_phys_freq_animation",
-            getattr(scene, "sb_phys_freq", 4.0),
-        )
-        zeta = getattr(
-            scene,
-            "sb_phys_zeta_animation",
-            getattr(scene, "sb_phys_zeta", 0.7),
-        )
-    else:
-        freq_hz = getattr(
-            scene,
-            "sb_phys_freq_interactive",
-            getattr(scene, "sb_phys_freq", 4.0),
-        )
-        zeta = getattr(
-            scene,
-            "sb_phys_zeta_interactive",
-            getattr(scene, "sb_phys_zeta", 0.7),
-        )
+    freq_hz = getattr(scene, "sb_phys_freq", 4.0)
+    zeta = getattr(scene, "sb_phys_zeta", 0.7)
 
     for bone in scene.sb_spring_bones:
         armature = bpy.data.objects.get(bone.armature)
