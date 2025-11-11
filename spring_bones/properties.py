@@ -85,16 +85,30 @@ _SCENE_PROPS = {
         description="Use spring–damper physics update instead of legacy integrator",
         default=False,
     ),
-    "sb_phys_freq": bpy.props.FloatProperty(
+    "sb_phys_freq_interactive": bpy.props.FloatProperty(
         name="Freq (Hz)",
-        description="Natural frequency of the spring",
+        description="Natural frequency of the spring used while running interactive mode",
         default=4.0,
         min=0.01,
         soft_max=20.0,
     ),
-    "sb_phys_zeta": bpy.props.FloatProperty(
+    "sb_phys_zeta_interactive": bpy.props.FloatProperty(
         name="Damping Ratio",
-        description="0 = none, 1 = critical, >1 = over-damped",
+        description="0 = none, 1 = critical, >1 = over-damped for interactive mode",
+        default=0.7,
+        min=0.0,
+        soft_max=2.0,
+    ),
+    "sb_phys_freq_animation": bpy.props.FloatProperty(
+        name="Freq (Hz)",
+        description="Natural frequency of the spring used while running animation mode",
+        default=4.0,
+        min=0.01,
+        soft_max=20.0,
+    ),
+    "sb_phys_zeta_animation": bpy.props.FloatProperty(
+        name="Damping Ratio",
+        description="0 = none, 1 = critical, >1 = over-damped for animation mode",
         default=0.7,
         min=0.0,
         soft_max=2.0,
