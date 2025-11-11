@@ -55,6 +55,16 @@ _SCENE_PROPS = {
         description="Enable Spring on frame change only",
         default=False,
     ),
+    "sb_enable_gravity": bpy.props.BoolProperty(
+        name="Enable Gravity",
+        description="Apply world-space gravity as external acceleration",
+        default=False,
+    ),
+    "sb_inertial_comp": bpy.props.BoolProperty(
+        name="Inertial Compensation",
+        description="Subtract base acceleration so gravity feels correct in accelerating rigs",
+        default=False,
+    ),
     "sb_vis_forces": bpy.props.BoolProperty(
         name="Show Forces",
         description="Draw spring forces/torques in the 3D View",
@@ -115,6 +125,20 @@ _POSE_BONE_PROPS = {
         default=0.0,
         min=-100.0,
         max=100.0,
+    ),
+    "sb_max_displacement": bpy.props.FloatProperty(
+        name="Max Displacement",
+        description="Max distance the simulated point may deviate from the target (0 = off)",
+        default=0.0,
+        min=0.0,
+        soft_max=1.0,
+    ),
+    "sb_max_deflection_deg": bpy.props.FloatProperty(
+        name="Max Deflection (deg)",
+        description="Max cone angle around anchor→target axis (0 = off)",
+        default=0.0,
+        min=0.0,
+        soft_max=90.0,
     ),
     "sb_bone_rot": bpy.props.BoolProperty(
         name="Rotation",

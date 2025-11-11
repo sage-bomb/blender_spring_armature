@@ -40,6 +40,8 @@ class SB_PT_ui(bpy.types.Panel):
             col = layout.column(align=True)
             col.label(text="Simulation Settings:")
             col.prop(scene, "sb_target_alpha", text="Target Smoothing", slider=True)
+            col.prop(scene, "sb_enable_gravity", text="Enable Gravity")
+            col.prop(scene, "sb_inertial_comp", text="Inertial Compensation")
 
             col = layout.column(align=True)
             col.label(text='Bone Parameters:')
@@ -48,6 +50,8 @@ class SB_PT_ui(bpy.types.Panel):
             col.prop(active_bone, 'sb_phys_stiffness', text="Stiffness")
             col.prop(active_bone, 'sb_phys_damping', text="Damping")
             col.prop(active_bone, 'sb_gravity', text="Gravity")
+            col.prop(active_bone, 'sb_max_displacement', text="Max Displacement")
+            col.prop(active_bone, 'sb_max_deflection_deg', text="Max Deflection")
             col.prop(active_bone, 'sb_global_influence', text="Influence")
 
             layout.separator()
