@@ -194,7 +194,29 @@ def spring_bone(scene, depsgraph=None):
 
         # IMPORTANT: derive v_target from the SMOOTHED series
         v_target = (target_smooth - prev_target) / max(1e-4, dt)
-        external_accel = Vector((0.0, 0.0, -pose_bone.sb_gravity))
+
+        enable_grav = getattr(scene, "sb_enable_gravity", False)
+        use_inertial = getattr(scene, "sb_inertial_comp", False)
+
+        if enable_grav:
+            g_world = Vector((0.0, 0.0, -pose_bone.sb_gravity))
+
+            if use_inertial:
+                base_loc = Vector(armature_eval.location)
+                prev_base_loc = Vector(getattr(bone, "prev_base_loc", base_loc))
+                base_vel = (base_loc - prev_base_loc) / max(1e-4, dt)
+
+                prev_base_vel = Vector(getattr(bone, "prev_base_vel", base_vel))
+                base_accel = (base_vel - prev_base_vel) / max(1e-4, dt)
+
+                effective_accel = g_world - base_accel
+
+                bone.prev_base_loc = base_loc
+                bone.prev_base_vel = base_vel
+            else:
+                effective_accel = g_world
+        else:
+            effective_accel = Vector((0.0, 0.0, 0.0))
 
         freq_hz = getattr(pose_bone, "sb_phys_stiffness", 4.0)
         zeta = getattr(pose_bone, "sb_phys_damping", 0.7)
@@ -209,8 +231,38 @@ def spring_bone(scene, depsgraph=None):
             freq_hz=freq_hz,
             zeta=zeta,
             dt=dt,
-            external_accel=external_accel,
+            external_accel=effective_accel,
         )
+
+        max_disp = getattr(pose_bone, "sb_max_displacement", 0.0)
+        if max_disp > 0.0:
+            delta = x_next - target_smooth
+            dlen = delta.length
+            if dlen > max_disp and dlen > 0.0:
+                x_next = target_smooth + (delta / dlen) * max_disp
+                v_next *= 0.5
+
+        max_def_deg = getattr(pose_bone, "sb_max_deflection_deg", 0.0)
+        if max_def_deg > 0.0:
+            anchor = Vector(armature_eval.location)
+            a_to_t = target_smooth - anchor
+            a_to_p = x_next - anchor
+            if a_to_t.length > 1e-6 and a_to_p.length > 1e-6:
+                u = a_to_t.normalized()
+                w = a_to_p
+                w_para = u * w.dot(u)
+                w_perp = w - w_para
+
+                max_theta = math.radians(max_def_deg)
+                w_para_len = w_para.length
+                w_perp_len = w_perp.length
+                cur_theta = math.atan2(w_perp_len, max(w_para_len, 1e-6))
+
+                if cur_theta > max_theta and w_perp_len > 0.0:
+                    scale = math.tan(max_theta) * max(w_para_len, 1e-6) / max(w_perp_len, 1e-6)
+                    w_perp = w_perp * scale
+                    x_next = anchor + w_para + w_perp
+                    v_next *= 0.5
 
         # NOTE: write to original ID, evaluated is copy-on-write
         emp_head.location = x_next
