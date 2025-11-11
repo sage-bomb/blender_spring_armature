@@ -36,6 +36,11 @@ class SB_PT_ui(bpy.types.Panel):
                 col.operator("sb.spring_bone_frame", text="Stop", icon='PAUSE')
             col.enabled = not context.scene.sb_global_spring
 
+            layout.separator()
+            col = layout.column(align=True)
+            col.label(text="Simulation Settings:")
+            col.prop(scene, "sb_target_alpha", text="Target Smoothing", slider=True)
+
             col = layout.column(align=True)
             col.label(text='Bone Parameters:')
             col.prop(active_bone, 'sb_bone_spring', text="Spring")
